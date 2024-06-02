@@ -10,37 +10,21 @@ export async function run(provider: NetworkProvider, args: string[]) {
         return;
     }
     const vesting = provider.open(Vesting.createFromAddress(address));
-
     const action = await ui.select('Select an action', ['Deposit', 'Withdraw', 'Add Reward']);
-
     if (action === 'Deposit') {
         const depositAmount = toNano(await ui.input('Enter the deposit amount (in TON)'));
-        const depositResult = await vesting.sendDeposit(provider.sender(), {
-            value: depositAmount,
-        });
-        ui.write('Deposit transaction sent. Transaction hash:', depositResult.transaction.id.hash.toString());
+        await vesting.sendDeposit(provider.sender(), depositAmount);
+        ui.write('Deposit transaction sent.');
     } else if (action === 'Withdraw') {
-        const withdrawResult = await provider.sender().send({
-            to: vesting.address,
-            value: toNano('0.1'),
-            bounce: false,
-            body: Buffer.from('w'),
-        });
-        ui.write('Withdraw transaction sent. Transaction hash:', withdrawResult.transaction.id.hash.toString());
+        await vesting.sendWithdraw(provider.sender());
+        ui.write('Withdraw transaction sent.');
     } else if (action === 'Add Reward') {
         const rewardAmount = toNano(await ui.input('Enter the reward amount (in TON)'));
-        const rewardResult = await provider.sender().send({
-            to: vesting.address,
-            value: rewardAmount,
-            bounce: false,
-            body: Buffer.from('r'),
-        });
-        ui.write('Reward transaction sent. Transaction hash:', rewardResult.transaction.id.hash.toString());
+        await vesting.sendReward(provider.sender(), rewardAmount);
+        ui.write('Reward transaction sent.');
     }
-
     ui.write('Waiting for the transaction to be confirmed...');
     await sleep(10000);
-
     const lockerData = await vesting.getLockerData();
     ui.write('Vesting contract data:');
     ui.write('- Total coins locked:', lockerData.totalCoinsLocked.toString());
