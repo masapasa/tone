@@ -3,17 +3,17 @@ import { Vesting } from '../wrappers/Vesting';
 import { compile, NetworkProvider } from '@ton/blueprint';
 
 export async function run(provider: NetworkProvider) {
-    //const billCode = await compile('LockerBill');
+    const billCode = await compile('LockerBill');
     const vesting = provider.open(
         Vesting.createFromConfig(
             {
-                total_coins_locked: 0n,
-                total_reward: 0n,
-                deposits_end_time: Math.floor(Date.now() / 1000) + 60,
-                vesting_start_time: Math.floor(Date.now() / 1000) + 120,
-                vesting_total_duration: 600,
-                unlock_period: 60,
-                bill_code: billCode,
+                totalCoinsLocked: 0n,
+                totalReward: 0n,
+                depositsEndTime: Math.floor(Date.now() / 1000) + 60,
+                vestingStartTime: Math.floor(Date.now() / 1000) + 120,
+                vestingTotalDuration: 600,
+                unlockPeriod: 60,
+                billCode: billCode,
             },
             await compile('Vesting'),
         ),

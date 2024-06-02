@@ -98,4 +98,11 @@ import {
         unlockPeriod: stack.readNumber(),
       };
     }
+    async sendDeploy(provider: ContractProvider, via: Sender, value: bigint) {
+      await provider.internal(via, {
+        value,
+        sendMode: SendMode.PAY_GAS_SEPARATELY,
+        body: beginCell().storeUint(2, 32).endCell(),
+      });
+    }
   }
