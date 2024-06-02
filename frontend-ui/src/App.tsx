@@ -1,17 +1,19 @@
 import "./App.css";
 import { TonConnectButton } from "@tonconnect/ui-react";
-import { usevestingContract } from "./hooks/usevestingContract";
 import { useTonConnect } from "./hooks/useTonConnect";
 import { useState } from "react";
+import { useVestingContract } from "./hooks/useVestingContract";
+import { Vesting } from "./contracts/Vesting";
+import VestingComponent from "./components/VestingComponent";
 
 function App() {
   const { connected } = useTonConnect();
 
   const [bet, setBet] = useState(0.05);
 
-  const { balance, sendPlay } = usevestingContract(
+  const { balance, sendPlay } = useVestingContract(
     "EQCuWDIPWO6fGDN7w4ZpwNtBTEjl6_shllCJnfZptcoWgV-l" // Contract address
-  );
+  ) || {};
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   function proxySetBet(e: any) {
@@ -30,6 +32,9 @@ function App() {
         <TonConnectButton
           style={{ position: "fixed", top: "10px", right: "20px" }}
         />
+      </div>
+      <div style={{ textAlign: "center", marginTop: "50px" }}>
+        <VestingComponent />
       </div>
       <div>
         <div className="Card">
@@ -81,5 +86,4 @@ function App() {
     </div>
   );
 }
-
 export default App;
