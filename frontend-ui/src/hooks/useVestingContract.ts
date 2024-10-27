@@ -26,16 +26,20 @@ export function useVestingContract(contractAddress: string) {
     new Promise((resolve) => setTimeout(resolve, time));
 
   const vestingContract = useAsyncInitialize(async () => {
-    if (!client) return;
+    if (!client) return undefined;
     const contract = new Vesting(Address.parse(contractAddress));
     return client.open(contract) as OpenedContract<Vesting>;
-  }, [client]);
+  }, [client, contractAddress]);
 
   useEffect(() => {
-    async function getBalance() {
+    async function fetchData() {
       if (!vestingContract) return;
-      const { balance } = await vestingContract.getBalance();
-      setBalance(BigInt(balance));
+      try {
+        const state = await vestingContract.getBalance();
+        setBalance(state.balance);
+      } catch (error) {
+        console.error('Error fetching balance:', error);
+      }
     }
 
     async function getVestingData() {
@@ -68,27 +72,26 @@ export function useVestingContract(contractAddress: string) {
     vestingData,
     sendDeposit: async (amount: number) => {
       try {
-        await vestingContract?.sendDeposit(sender, {
-          value: toNano(BigInt(amount)),
-        });
+        if (!vestingContract || !sender) return;
+        const value = toNano(amount);
+        await vestingContract.sendDeposit(sender, { value });
       } catch (error) {
         console.error('Error sending deposit:', error);
       }
     },
     sendWithdraw: async () => {
       try {
-        await vestingContract?.sendWithdraw(sender, {
-          value: toNano(0.1),
-        });
+        if (!vestingContract || !sender) return;
+        await vestingContract.sendWithdraw(sender, { value: toNano('0.1') });
       } catch (error) {
         console.error('Error sending withdraw:', error);
       }
     },
-    sendReward: async (amount: number) => {
+    sendReward: async (amount: string) => {
       try {
-        await vestingContract?.sendReward(sender, {
-          value: toNano(BigInt(amount)),
-        });
+        if (!vestingContract || !sender) return;
+        const value = toNano(amount);
+        await vestingContract.sendReward(sender, { value });
       } catch (error) {
         console.error('Error sending reward:', error);
       }

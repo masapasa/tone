@@ -9,25 +9,39 @@ import {
   SendMode,
 } from "@ton/core";
 
-export type vestingConfig = {
-  id: number;
+  export type VestingConfig = {
+    totalCoinsLocked: bigint;
+    totalReward: bigint;
+    depositsEndTime: number;
+    vestingStartTime: number;
+    vestingTotalDuration: number;
+    unlockPeriod: number;
+    billCode: Cell;
 };
 
-export function vestingConfigToCell(config: vestingConfig): Cell {
-  return beginCell().storeUint(config.id, 64).endCell();
+  export function vestingConfigToCell(config: VestingConfig): Cell {
+    return beginCell()
+      .storeCoins(config.totalCoinsLocked)
+      .storeCoins(config.totalReward)
+      .storeUint(config.depositsEndTime, 32)
+      .storeUint(config.vestingStartTime, 32)
+      .storeUint(config.vestingTotalDuration, 32)
+      .storeUint(config.unlockPeriod, 32)
+      .storeRef(config.billCode)
+      .endCell();
 }
 
 export class Vesting implements Contract {
   constructor(
     readonly address: Address,
-    readonly init?: { code: Cell; data: Cell },
+      readonly init?: { code: Cell; data: Cell }
   ) {}
 
   static createFromAddress(address: Address) {
     return new Vesting(address);
   }
 
-  static createFromConfig(config: vestingConfig, code: Cell, workchain = 0) {
+    static createFromConfig(config: VestingConfig, code: Cell, workchain = 0) {
     const data = vestingConfigToCell(config);
     const init = { code, data };
     const address = contractAddress(workchain, init);
@@ -35,41 +49,65 @@ export class Vesting implements Contract {
     return new Vesting(address, init);
   }
 
-  async sendPlay(provider: ContractProvider, via: Sender, value: bigint) {
+    async sendDeposit(
+      provider: ContractProvider,
+      via: Sender,
+      opts: { value: bigint }
+    ) {
     await provider.internal(via, {
-      value,
+        value: opts.value,
       sendMode: SendMode.PAY_GAS_SEPARATELY,
-      body: beginCell().storeUint(1, 32).endCell(),
+        body: beginCell().storeUint(0, 32).storeUint(0x64, 8).endCell(), // 'd'
     });
   }
 
-  async sendDeploy(provider: ContractProvider, via: Sender, value: bigint) {
+    async sendWithdraw(
+      provider: ContractProvider,
+      via: Sender,
+      opts: { value: bigint }
+    ) {
     await provider.internal(via, {
-      value,
+        value: opts.value,
       sendMode: SendMode.PAY_GAS_SEPARATELY,
-      body: beginCell().storeUint(2, 32).endCell(),
+        body: beginCell().storeUint(0, 32).storeUint(0x77, 8).endCell(), // 'w'
+      });
+    }
+  
+    async sendReward(
+      provider: ContractProvider,
+      via: Sender,
+      opts: { value: bigint }
+    ) {
+      await provider.internal(via, {
+        value: opts.value,
+        sendMode: SendMode.PAY_GAS_SEPARATELY,
+        body: beginCell().storeUint(0, 32).storeUint(0x72, 8).endCell(), // 'r'
     });
   }
 
   async getBalance(provider: ContractProvider) {
-    const { stack } = await provider.get("balance", []);
+      const { balance } = await provider.getState();
     return {
-      balance: stack.readNumber(),
+        balance: BigInt(balance),
     };
   }
+  
   async getLockerData(provider: ContractProvider) {
-    const { stack } = await provider.get("lockerData", []);
+      const { stack } = await provider.get("get_locker_data", []);
     return {
-      totalCoinsLocked: stack.readNumber(),
-      totalReward: stack.readNumber(),
+        totalCoinsLocked: stack.readBigNumber(),
+        totalReward: stack.readBigNumber(),
       depositsEndTime: stack.readNumber(),
       vestingStartTime: stack.readNumber(),
       vestingTotalDuration: stack.readNumber(),
       unlockPeriod: stack.readNumber(),
     };
   }
+  
   async getBillAddress(provider: ContractProvider, userAddress: Address) {
-    const { stack } = await provider.get("getBillAddress", [userAddress]);
+      const { stack } = await provider.get("get_bill_address", [
+        { type: "slice", cell: beginCell().storeAddress(userAddress).endCell() },
+      ]);
     return stack.readAddress();
   }
   async sendDeposit(provider: ContractProvider, via: Sender, opts: { value: bigint }) {

@@ -5,8 +5,7 @@ import { useTonConnect } from '../hooks/useTonConnect';
 
 const VestingComponent: React.FC = () => {
   const { sender, connected } = useTonConnect();
-  const vestingContract = useVestingContract(/* contract address */);
-
+  const vestingContract = useVestingContract('EQCuWDIPWO6fGDN7w4ZpwNtBTEjl6_shllCJnfZptcoWgV-l'); // Replace with your contract address
   const [lockerData, setLockerData] = useState<any>(null);
   const [stakeAmount, setStakeAmount] = useState('');
 
