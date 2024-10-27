@@ -3,6 +3,9 @@ import { Vesting } from '../wrappers/Vesting';
 import { compile, NetworkProvider } from '@ton/blueprint';
 
 export async function run(provider: NetworkProvider) {
+    const billCode = await compile('Bill');
+    const vestingCode = await compile('Vesting');
+
     const vesting = provider.open(
         Vesting.createFromConfig(
             {
@@ -12,8 +15,9 @@ export async function run(provider: NetworkProvider) {
                 vestingStartTime: Math.floor(Date.now() / 1000) + 120,
                 vestingTotalDuration: 600,
                 unlockPeriod: 60,
+                billCode: billCode,
             },
-            await compile('Vesting'),
+            vestingCode,
         ),
     );
     await vesting.sendDeploy(provider.sender(), toNano('0.05'));

@@ -105,4 +105,11 @@ import {
         body: beginCell().storeUint(2, 32).endCell(),
       });
     }
-  }
+
+    async getBillAddress(provider: ContractProvider, userAddress: Address): Promise<Address> {
+        const { stack } = await provider.get('get_bill_address', [
+            { type: 'slice', cell: beginCell().storeAddress(userAddress).endCell() }
+        ]);
+        return stack.readAddress();
+    }
+}
